@@ -13,6 +13,7 @@ import {
   setDoc,
   arrayUnion,
   updateDoc,
+  getDoc,
 } from "firebase/firestore";
 
 // Your web app's Firebase configuration
@@ -38,22 +39,40 @@ const chatMessagesRef = doc(chatHistoryRef, "chat-messages");
 
 function PartyChat() {
   const [userName, setUserName] = useState("Anon");
-  const [chatHistory, setChatHistory] = useState([]);
+  const [chatHistory, setChatHistory] = useState([
+    {
+      time: Date.now(),
+      sender: "Host",
+      message: "Welcome to the party!",
+    },
+  ]);
+  const [userMessage, setUserMessage] = useState({});
 
   // set initial chat state
-
-  async function startChat() {
-    await updateDoc(
-      chatMessagesRef,
-      "message-array",
-      arrayUnion({
-        time: Date.now(),
-        sender: "Host",
-        message: "Welcome to the party!",
-      })
-    );
+  async function fetchMessageHistory() {
+    const docSnap = await getDoc(chatMessagesRef);
+    if (docSnap.exists()) {
+      console.log("Document data:", docSnap.data());
+      // setChatHistory(docSnap.data()["message-array"]);
+      console.log("message history in state", chatHistory);
+    } else {
+      console.log("Document does not exist");
+    }
   }
-  startChat();
+  fetchMessageHistory();
+
+  // async function startChat() {
+  //   await updateDoc(
+  //     chatMessagesRef,
+  //     "message-array",
+  //     arrayUnion({
+  //       time: Date.now(),
+  //       sender: "Host",
+  //       message: "Welcome to the party!",
+  //     })
+  //   );
+  // }
+  // startChat();
 
   useEffect(() => {
     const chatHistoryUnsubscribe = onSnapshot(chatMessagesRef, (snapshot) => {
@@ -65,7 +84,7 @@ function PartyChat() {
     return () => {
       chatHistoryUnsubscribe();
     };
-  }, [chatHistory]);
+  }, [userMessage]);
 
   return (
     <div>
@@ -76,7 +95,7 @@ function PartyChat() {
             <input id="nameInput" type="text" />
             <input id="messageInput" type="text" />
             <button type="submit">Send</button>
-            <button type="reset"></button>
+            <button type="reset">Clear</button>
           </form>
         </div>
       </div>
